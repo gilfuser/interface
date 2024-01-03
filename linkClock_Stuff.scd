@@ -1,6 +1,6 @@
 // https://scsynth.org/t/linkclock-tempobusclock-linkbusclock/6145
 fork{
-    "cd /home/skmecs/Carabiner && ./Carabiner".runInTerminal;
+    // "cd /home/skmecs/Carabiner && ./Carabiner".runInTerminal;
     s.sync;
     0.2.wait;
     t = t ? TempoClock.default;
