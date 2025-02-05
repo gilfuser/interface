@@ -1,6 +1,6 @@
 {
     PdefnAllGui.new(Pdefn.all.size);
-    q.pxMixer = ProxyMixer(p, 16); // espaço para 16 proxies
+    q.pxMixer = ProxyMixer(p, 12); // espaço para 16 proxies
     // q.pxMixer.parent.alwaysOnTop_(true);
     q.ndefMixer = NdefMixer(s);
     // if you have JITLibExtensions installed, try ProxyMeter to see the proxy levels:
@@ -14,6 +14,6 @@
     } { Document.open( Platform.userHomeDir ++ "/SuperCollider/_0_main-controls.scd") };
 
     s.makeWindow;
-    s.meter(2,10);
+    s.meter(2,18);
     s.scope(2);
 }.defer(1);

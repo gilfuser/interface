@@ -14,7 +14,7 @@ fork{
     wait(0.1);
     p.tempo = t.tempo;  // numeric proxy
     0.1.wait;
-    SynthDef(\krClick, { |out, beatsPerSec = 1, beats = 1, subdiv = 4|
+    /*SynthDef(\krClick, { |out, beatsPerSec = 1, beats = 1, subdiv = 4|
         var click = Impulse.kr(beatsPerSec * subdiv);
         var count = PulseCount.kr(click);
         FreeSelf.kr(Delay1.kr(count >= (subdiv * beats)));
@@ -33,7 +33,7 @@ fork{
         \beatsPerSec, p.tempo.bus.asMap,
         \subdiv,4,
         \dur, 1,
-    ));
+    ));*/
 /*    0.1.wait;
     p.click.clear;
     0.1.wait;
@@ -80,7 +80,7 @@ fork{
         \dur, 1,
     );*/
 
-    ">>> access tempo proxy: ~tempo.kr in synths \n>>> or ~tempo.bus.asMap in patterns <<<\n".postString;
+    // ">>> access tempo proxy: ~tempo.kr in synths \n>>> or ~tempo.bus.asMap in patterns <<<\n".postString;
     /*{
     var ctl;
     Ndef(\tempo, l.tempo);  // numeric proxy
@@ -97,4 +97,4 @@ fork{
     ">>> access tempo proxy: Ndef(\\tempo).kr in synths \n>>> or Ndef(\\tempo).bus.asMap in patterns <<<".postln;
     };*/
 };
-"***** linkClock Stuff loaded. *****\n*** Acess control click through Ndef(\\click).kr ***\n".postString
+// "***** linkClock Stuff loaded. *****\n*** Acess control click through Ndef(\\click).kr ***\n".postString

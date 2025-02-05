@@ -9,7 +9,7 @@ fork{
     wait(0.1);
     t = l;
     0.1.wait;
-    SynthDef(\krClick, { |out, beatsPerSec = 1, beats = 1, subdiv = 4|
+    SynthDef(\krClick,{  |out, beatsPerSec = 1, beats = 1, subdiv = 4|
         var click = Impulse.kr(beatsPerSec * subdiv);
         var count = PulseCount.kr(click);
         FreeSelf.kr(Delay1.kr(count >= (subdiv * beats)));
@@ -21,7 +21,8 @@ fork{
     if (p != nil)
     {
         var ctl;
-        p.push;
+      if (currentEnvironment == topEnvironment)
+      {p.push;};
         ~tempo = l.tempo;  // numeric proxy
 
         ctl = SimpleController(l)
