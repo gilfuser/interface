@@ -1,0 +1,3 @@
+[submodule "superDirt_startup"]
+	path = superDirt_startup
+	url = https://github.com/gilfuser/superDirt_startup.git
