@@ -1,11 +1,11 @@
 // Change parameter in Ndefs with effects. One for each orbit from Tidal.
 // I'm using four orbits here, so there are four Ndefs.
 // This is a litle bit long because there are X steps involved:
-// 1: start the server with enougth output channels.
+// 1: start the server with enought output channels.
 // the output from the orbits and the effect Ndefs should't output to the
 // physical output becou
 // In practice this should be in separated files to a better organization.
-
+q = q ? ();
 (
 OSCdef(\oscFromTidal, { |msg|
 	MFdef(\theHub).value(msg);
