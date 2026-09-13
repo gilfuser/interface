@@ -1,18 +1,32 @@
 (
 var patch_dir = thisProcess.nowExecutingPath.dirname;
+var bundled_desc_path = patch_dir +/+ "behringer-x-touch-mini.desc.scd";
 var expected_log_revision = "2026-08-08-log-palette-v2";
-var expected_device_revision = "2026-08-31-device-r8";
-var expected_processes_revision = "2026-08-31-process-registry-r8";
-var expected_layer_b_revision = "2026-08-31-mixer-r8";
-var expected_mc_revision = "2026-08-31-router-timeline-r8";
+var expected_device_revision = "2026-09-09-device-r8.1";
+var expected_processes_revision = "2026-09-10-relative3-r8.3";
+var expected_layer_b_revision = "2026-09-10-relative3-r8.3";
+var expected_mc_revision = "2026-09-10-orbit-process-leds-r8.4";
 var expected_ktlloop_revision = "2026-08-31-auto-capture-r8";
-var expected_hud_revision = "2026-08-31-hud-r8";
+var expected_hud_revision = "2026-09-10-mc-orbit-focus-r8.4";
 
 // Todos os módulos compartilham as mesmas variáveis de ambiente, mesmo quando
 // o loader é avaliado dentro de uma ProxySpace.
 if (currentEnvironment.class == ProxySpace) { topEnvironment.push };
 q.xtouch = q.xtouch ? ();
-q.xtouch.patch_revision = "2026-08-31-r8";
+q.xtouch.patch_revision = "2026-09-10-r8.4";
+q.xtouch.patch_dir = patch_dir;
+q.xtouch.desc_path = bundled_desc_path;
+
+// A extensão MC da descrição agora faz parte do próprio pacote. Registramos
+// esta pasta no Modality antes de MKtl.find, para que a descrição incluída
+// prevaleça sobre a versão padrão, sem sobrescrever arquivos do Quark.
+if (File.exists(bundled_desc_path).not) {
+    Error(
+        "behringer-x-touch-mini.desc.scd ausente no pacote r8.4."
+    ).throw;
+};
+MKtlDesc.addFolder(patch_dir, "");
+MKtlDesc.loadDescs("behringer-x-touch-mini");
 
 // Configuração pública. Valores definidos pelo usuário antes de carregar o
 // patch são preservados; os demais recebem defaults seguros.
@@ -27,6 +41,8 @@ q.xtouch.patch_revision = "2026-08-31-r8";
 ~xtouch_config[\mcWetScale] = ~xtouch_config[\mcWetScale] ? 2.0;
 ~xtouch_config[\encoderLagTime] =
 ~xtouch_config[\encoderLagTime] ? 0.2;
+~xtouch_config[\encoderRelativeScale] =
+~xtouch_config[\encoderRelativeScale] ? 0.5;
 ~xtouch_config[\showHud] = ~xtouch_config[\showHud] ? true;
 ~xtouch_config[\hudAlwaysOnTop] =
 ~xtouch_config[\hudAlwaysOnTop] ? true;
@@ -116,7 +132,7 @@ fork {
     ~xtouch_log.value("[LOAD] hud");
 
     ~xtouch_log.value(
-        "X-Touch Mini r8: editor, mixer, router/timeline e looper carregados."
+        "X-Touch Mini r8.4: editor, mixer, router/timeline e looper carregados."
     );
 };
 )

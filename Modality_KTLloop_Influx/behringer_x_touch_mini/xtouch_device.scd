@@ -2,7 +2,7 @@
     var xtouch_info;
     var lookup_wait = 0.0;
 
-    ~xtouch_device_revision = "2026-08-31-device-r8";
+    ~xtouch_device_revision = "2026-09-09-device-r8.1";
 
     // MKtl.find trabalha em segundo plano. Em vez de supor que um segundo é
     // suficiente, esperamos a X-Touch aparecer de fato no MKtlLookup.
@@ -16,6 +16,20 @@
         0.1.wait;
         lookup_wait = lookup_wait + 0.1;
         xtouch_info = MKtlLookup.findByIDInfo("X-TOUCH MINI");
+    };
+
+    // MKtl.find pode recarregar a descrição padrão durante a descoberta.
+    // Reaplicamos explicitamente a cópia empacotada antes de criar o MKtl.
+    MKtlDesc.fromPath(q.xtouch.desc_path);
+
+    // Uma carga anterior pode ter deixado uma instância construída com a
+    // descrição padrão. Ela precisa ser recriada para ganhar a árvore MC.
+    [\xtm, \loop].do { |mktl_name|
+        var previous = MKtl.all[mktl_name];
+
+        if (previous.notNil) {
+            previous.free;
+        };
     };
 
     if (xtouch_info.isNil or: { xtouch_info.isEmpty }) {
@@ -46,7 +60,8 @@
         or: { ~xtm.elAt(\mc_led, \layer, \A).isNil }
     ) {
         Error(
-            "A descrição behringer-x-touch-mini precisa da extensão MC."
+            "A descrição MC empacotada não foi aplicada. "
+            "Confira q.xtouch.desc_path e MKtlDesc.descFolders."
         ).throw;
     };
 

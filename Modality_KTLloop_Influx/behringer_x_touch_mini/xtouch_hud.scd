@@ -1,5 +1,5 @@
 ~init_xtouch_hud = {
-    ~xtouch_hud_revision = "2026-08-31-hud-r8";
+    ~xtouch_hud_revision = "2026-09-10-mc-orbit-focus-r8.4";
     q.xtouch = q.xtouch ? ();
     q.xtouch.hud_revision = ~xtouch_hud_revision;
     ~xtouch_hud_views = ();
@@ -9,6 +9,7 @@
             var process_name;
             var process_entry;
             var mode_text;
+            var display_orbit;
             var parameter_text;
             var routing_text;
             var looper_text;
@@ -29,10 +30,16 @@
                     "LAYER %".format(~current_xtouch_layer)
                 };
 
+                display_orbit = if (~mc_mode == true) {
+                    ~mc_selected_orbit_name ? ~selected_orbit_name
+                } {
+                    ~selected_orbit_name
+                };
+
                 ~xtouch_hud_views[\header].string_(
                     "%  |  %  |  %".format(
                         mode_text,
-                        ~selected_orbit_name.asString.toUpper,
+                        display_orbit.asString.toUpper,
                         process_entry[\label] ? process_name.asString
                     )
                 );

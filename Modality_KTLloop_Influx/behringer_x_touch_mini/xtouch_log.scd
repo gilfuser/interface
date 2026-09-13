@@ -111,4 +111,4 @@
         ~xtouch_log_view = nil;
         ~open_xtouch_log.value;
     }.defer;
-);
+)

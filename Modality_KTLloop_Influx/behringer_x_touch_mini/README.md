@@ -1,4 +1,4 @@
-# X-Touch Mini modular performance controller — r8
+# X-Touch Mini modular performance controller — r8.4
 
 This SuperCollider patch turns a Behringer X-Touch Mini into a controller for:
 
@@ -10,7 +10,12 @@ This SuperCollider patch turns a Behringer X-Touch Mini into a controller for:
 - recording parameter automation with automatic four-take overdubbing;
 - displaying the current context in an always-on-top HUD.
 
-The r8 interaction model is intentionally small:
+Revision r8.4 uses `Relative3` encoders in Layers A and B and adds an orbit-focus
+view to the MC router. MC process buttons now show every active process in the
+last orbit whose encoder was pressed or turned, while the currently selected
+process blinks.
+
+The r8.4 interaction model is intentionally small:
 
 > **Layer A edits. Layer B mixes. MC connects. Record captures whatever you move.**
 
@@ -18,6 +23,7 @@ The r8 interaction model is intentionally small:
 
 | File | Responsibility |
 | --- | --- |
+| `behringer-x-touch-mini.desc.scd` | Extended Modality description for normal and MC modes |
 | `behringer_x_touch_mini.scd` | Loader, configuration and revision checks |
 | `xtouch_device.scd` | Device lookup, virtual fallback, element aliases and BPM slider |
 | `xtouch_processes.scd` | Declarative process registry, Layer A, routing and parameter state |
@@ -32,13 +38,34 @@ The r8 interaction model is intentionally small:
 
 - SuperCollider;
 - Modality-toolkit with the X-Touch Mini description;
-- the extended `behringer-x-touch-mini.desc.scd` that maps MC inputs, MC rings, button LEDs and Layer A/B buttons;
+- the bundled extended `behringer-x-touch-mini.desc.scd`, which maps MC inputs, rings, button LEDs and Layer A/B buttons;
 - KtlLoop;
 - JITLib/ProxySpace and ProxyChain;
 - a running server and the existing `orb00` through `orb07` ProxyChains;
 - a shared clock in `t`, normally a `LinkClock`.
 
-The patch validates the required MC description. If `mc_ring` or the MC layer LEDs are missing, loading stops with an explicit error.
+## Required X-Touch Editor setup
+
+Before using r8.4, program the **TURN** section of all eight encoders in both
+Layer A and Layer B as follows:
+
+| Field | Value |
+| --- | --- |
+| Type | `CC` |
+| Channel | `11` |
+| Encoder behavior | `Relative3` |
+| LED ring | `Fan` |
+
+Keep each layer's existing CC numbers: `CC1…CC8` in Layer A and `CC11…CC18`
+in Layer B. Leave the pushes, buttons and slider unchanged. Exit the orange
+`EDITOR` state and close X-Touch Editor before starting SuperCollider.
+
+`Relative3` sends `65` for one step left and `1` for one step right. Faster
+turns may send larger magnitudes, which the patch retains as acceleration.
+
+The patch registers its own directory with `MKtlDesc`, loads the bundled
+description and validates the MC elements before creating the controller. It
+does not overwrite the description installed inside Modality-toolkit.
 
 ## Loading
 
@@ -52,7 +79,7 @@ Expected revision:
 
 ```supercollider
 q.xtouch.patch_revision.postln;
-// 2026-08-31-r8
+// 2026-09-10-r8.4
 
 q.xtouch.loaded_modules.postln;
 // [log, device, processes, layer_b, mc, ktlloop, hud]
@@ -65,6 +92,14 @@ MKtl(\loop, "behringer-x-touch-mini").gui
 ```
 
 The virtual GUI is kept on top and uses the same actions as the hardware.
+
+If description loading ever fails, inspect the exact bundled path and the
+folders known by Modality:
+
+```supercollider
+q.xtouch.desc_path.postln;
+MKtlDesc.descFolders.postln;
+```
 
 ## Configuration
 
@@ -79,12 +114,13 @@ Set options before loading the main file:
     timelineCycleBeats: 4,
     mcWetScale: 2.0,
     encoderLagTime: 0.2,
+    encoderRelativeScale: 0.5,
     showHud: true,
     hudAlwaysOnTop: true
 );
 ```
 
-Missing keys receive these defaults automatically. `loopCount` accepts 1–8; four is the intended r8 setup.
+Missing keys receive these defaults automatically. `loopCount` accepts 1–8; four is the intended r8.4 setup. `encoderRelativeScale` multiplies Layer A/B movement; `0.5` gives approximately 128 slow steps across the normalized range.
 
 ## Shared transport controls
 
@@ -179,11 +215,23 @@ Router controls:
 | Control | Action |
 | --- | --- |
 | Any assigned button | Select process |
-| Encoder push N | Insert/remove selected process in orbit N |
-| Encoder turn N | Change wet in orbit N when available |
+| Encoder push N | Focus orbit N, then insert/remove the selected process |
+| Encoder turn N | Focus orbit N, then change wet when available |
 | Layer A alone | Exit to Layer A |
 | Layer B alone | Exit to Layer B |
 | Layer A + Layer B | Toggle router/timeline button visualization |
+
+### Router button LEDs
+
+In router view, the last encoder pressed or turned defines the focused orbit:
+
+- blinking: the currently selected process, whether routed or not;
+- solid: another process active in the focused orbit;
+- off: process inactive in the focused orbit.
+
+Entering MC initially focuses the orbit selected in Layer A. The HUD header
+shows the current MC orbit focus. The timeline view retains its own button-LED
+display and does not show these routing states until returning to router view.
 
 ### Router rings
 
@@ -223,7 +271,7 @@ MC LED output is diff-based: only changed button or ring values are transmitted.
 
 ## Automatic KtlLoop recording
 
-There is no record-selection or playback-selection gesture in r8.
+There is no record-selection or playback-selection gesture in r8.4.
 
 ### Record a first take
 
@@ -371,6 +419,7 @@ Adding, removing or reordering an entry changes every selection interface togeth
     layer: ~current_xtouch_layer,
     mc: ~mc_mode,
     mc_visual: ~mc_visual_mode,
+    mc_orbit: ~mc_selected_orbit_name,
     process: ~process_selector.mode,
     orbit: ~selected_orbit_name,
     muted: ~muted_orbits,
@@ -389,7 +438,7 @@ Adding, removing or reordering an entry changes every selection interface togeth
 
 - Normal A/B switching is inferred from the first control event from the new hardware page because the controller emits no dedicated normal-mode layer message.
 - Rings are restored after that first event and confirmed again after 80 ms.
-- A regular-mode encoder sends an absolute value; the patch converts consecutive values into relative movement.
-- The first encoder message after initialization establishes a reference and does not change a parameter.
+- Layer A/B encoders must use `Relative3`; their movement has no absolute endpoint and requires no calibration message after changing context.
+- Relative input does not alter KtlLoop route identity or takeover: only a physical encoder event takes over `encoder + control kind + process + orbit`.
 - The MC encoder sensitivity depends on the extended description's `relEnc` mapping.
 - The patch has structural validation, but hardware timing, VST paths and live KtlLoop behavior must be tested in the target SuperCollider installation.

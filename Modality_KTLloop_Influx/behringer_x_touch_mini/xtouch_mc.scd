@@ -1,7 +1,7 @@
 (
     var mc_process_by_element = IdentityDictionary.new;
 
-    ~xtouch_mc_revision = "2026-08-31-router-timeline-r8";
+    ~xtouch_mc_revision = "2026-09-10-orbit-process-leds-r8.4";
     q.xtouch = q.xtouch ? ();
     q.xtouch.mc_revision = ~xtouch_mc_revision;
 
@@ -15,6 +15,8 @@
     ~mc_layer_pending = nil;
     ~mc_layer_chord_used = false;
     ~mc_layer_chord_task = nil;
+    ~mc_selected_orbit_name = ~selected_orbit_name ? ~orbit_names.first;
+    q.xtouch.mc_selected_orbit_name = ~mc_selected_orbit_name;
 
     ~mc_process_button_names =
     (1..8).collect { |n| "mc_bt_a%".format(n).asSymbol }
@@ -42,16 +44,37 @@
 
     ~render_mc_router_buttons = { |force = false|
         if (~mc_mode and: { ~mc_visual_mode == \router }) {
+            var active_processes = ~active_orbit_processes.value(
+                ~mc_selected_orbit_name
+            );
+
             ~mc_process_button_names.do { |button_name|
                 var process_name = ~mc_button_processes[button_name];
-                var value = if (process_name == ~process_selector.mode) {
-                    127
-                } {
-                    0
-                };
+                var value = case
+                // A seleção tem prioridade visual sobre o estado de routing.
+                { process_name == ~process_selector.mode } { 1 }
+                {
+                    process_name.notNil
+                    and: { active_processes.includes(process_name) }
+                } { 127 }
+                { true } { 0 };
 
                 ~set_mc_button_led.value(button_name, value, force);
             };
+        };
+    };
+
+    // O último encoder MC pressionado ou girado define a orbit cujos processos
+    // são mostrados pelos 16 botões. A seleção não altera a orbit do Layer A.
+    ~select_mc_orbit = { |orbit_name|
+        if (
+            ~orbit_names.includes(orbit_name)
+            and: { ~mc_selected_orbit_name != orbit_name }
+        ) {
+            ~mc_selected_orbit_name = orbit_name;
+            q.xtouch.mc_selected_orbit_name = orbit_name;
+            ~render_mc_router_buttons.value;
+            if (~hud_refresh.notNil) { ~hud_refresh.value };
         };
     };
 
@@ -133,6 +156,8 @@
 
     ~on_enter_mc = {
         ~mc_mode = true;
+        ~mc_selected_orbit_name = ~selected_orbit_name ? ~orbit_names.first;
+        q.xtouch.mc_selected_orbit_name = ~mc_selected_orbit_name;
         ~mc_layer_held[\A] = false;
         ~mc_layer_held[\B] = false;
         ~mc_layer_pending = nil;
@@ -241,6 +266,7 @@
 
         ~xtm.elAt(push_on_name).action_(MFunc.new);
         ~xtm.elAt(push_on_name).action.add(\toggle_mc_process, {
+            ~select_mc_orbit.value(~orbit_names[i]);
             ~toggle_orbit_process.value(
                 ~orbit_names[i],
                 ~process_selector.mode
@@ -259,6 +285,8 @@
             );
             var delta = (el.value - 0.5) *
             ~xtouch_config[\mcWetScale];
+
+            ~select_mc_orbit.value(orbit_name);
 
             if (wet_value.notNil and: { delta.abs > 0 }) {
                 ~set_process_wet.value(

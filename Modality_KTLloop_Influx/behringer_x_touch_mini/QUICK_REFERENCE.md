@@ -1,6 +1,9 @@
-# X-Touch Mini r8 — quick reference
+# X-Touch Mini r8.4 — quick reference
 
 > **A edits · B mixes · MC connects · Record captures what you move**
+
+Hardware requirement: set all Layer A and Layer B encoder turns to
+`CC / Relative3 / Fan` in X-Touch Editor. Exit Editor mode before performing.
 
 ## Controls shared by Layers A and B
 
@@ -32,8 +35,10 @@
 
 - B1 from A or B: enter MC.
 - Process button: select process.
-- Push encoder N: insert/remove process in orbit N.
-- Turn encoder N: wet in orbit N, when available.
+- Push encoder N: focus orbit N, then insert/remove the selected process.
+- Turn encoder N: focus orbit N, then change wet when available.
+- Process button blink: selected process.
+- Process button solid: another active process in the focused orbit.
 - Ring off: absent; full: active; proportional: wet.
 - Layer A alone: exit to A.
 - Layer B alone: exit to B.

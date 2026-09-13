@@ -2,14 +2,13 @@
     var a_input_names = List.new;
     var b_input_names = List.new;
 
-    ~xtouch_layer_b_revision = "2026-08-31-mixer-r8";
+    ~xtouch_layer_b_revision = "2026-09-10-relative3-r8.3";
 
     // Layer B é deliberadamente um mixer puro:
     // giro = level, botão A = mute, push = solo.
     ~orbit_level_values = ~orbit_level_values ? ();
     ~muted_orbits = ~muted_orbits ? IdentitySet.new;
     ~soloed_orbits = ~soloed_orbits ? IdentitySet.new;
-    ~b_encoder_hardware_values = ();
     ~b_encoder_target_values = ();
     ~ring_restore_task = nil;
 
@@ -26,10 +25,6 @@
             .unmap(current_level)
             .clip(0, 1);
         };
-    };
-
-    ~b_enc_names.do { |element_name|
-        ~b_encoder_hardware_values[element_name] = nil;
     };
 
     ~orbit_is_audible = { |orbit_name|
@@ -167,17 +162,12 @@
     ~b_enc_names.do { |element_name, i|
         ~xtm.elAt(element_name).action.add(\layer_b_level, { |el|
             var orbit_name = ~orbit_names[i];
-            var hardware_value = el.value;
-            var previous_value = ~b_encoder_hardware_values[element_name];
             var target_value = ~b_encoder_target_values[element_name];
+            var delta = ~relative_encoder_delta.value(el.value);
             var next_value;
 
-            ~b_encoder_hardware_values[element_name] = hardware_value;
-
-            if (previous_value.notNil and: { target_value.notNil }) {
-                next_value = (
-                    target_value + (hardware_value - previous_value)
-                ).clip(0, 1);
+            if (target_value.notNil and: { delta.abs > 0 }) {
+                next_value = (target_value + delta).clip(0, 1);
                 ~b_encoder_target_values[element_name] = next_value;
                 ~orbit_level_values[orbit_name] = next_value;
 

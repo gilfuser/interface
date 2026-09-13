@@ -1,6 +1,6 @@
 ~init_xtouch_processes = {
     ~xtouch_processes_revision =
-    "2026-08-31-process-registry-r8";
+    "2026-09-10-relative3-r8.3";
 
     // -----------------------------------------------------------------
     // Processos
@@ -535,11 +535,12 @@
         };
     };
 
-    // O layer A envia valores absolutos. Guardamos o último valor físico e
-    // usamos somente a diferença entre duas mensagens consecutivas. O primeiro
-    // CC recebido estabelece a referência e não altera o parâmetro; a partir
-    // do seguinte, o encoder atua imediatamente sobre o valor mostrado no ring.
-    ~encoder_hardware_values = ();
+    // Os encoders A/B usam Relative3: 65 para esquerda e 1 para direita.
+    // relEnc normaliza esses códigos ao redor de 0.5; a diferença em relação
+    // ao centro é um delta sem limites físicos ou estado de posição anterior.
+    ~relative_encoder_delta = { |value|
+        (value - 0.5) * ~xtouch_config[\encoderRelativeScale]
+    };
     ~encoder_target_values = ();
 
     // Lag2 no lado da linguagem: dois filtros de primeira ordem em cascata.
@@ -608,10 +609,6 @@
                 state[\task] = nil;
             }).play(SystemClock);
         };
-    };
-
-    ~a_enc_names.do { |element_name|
-        ~encoder_hardware_values[element_name] = nil;
     };
 
     // Sincroniza rings e valores lógicos ao trocar processo ou orbit.
@@ -875,18 +872,13 @@
     // edita o wet do processo, quando esse processo oferece wet.
     ~a_enc_names.do { |element_name, i|
         ~xtm.elAt(element_name).action.add(\process_selector, { |el|
-            var hardware_value = el.value;
-            var previous_value = ~encoder_hardware_values[element_name];
             var target_value = ~encoder_target_values[element_name];
             var process_name = ~process_selector.mode;
             var orbit_name = ~selected_orbit_name;
-            var delta;
+            var delta = ~relative_encoder_delta.value(el.value);
             var next_value;
 
-            ~encoder_hardware_values[element_name] = hardware_value;
-
-            if (previous_value.notNil and: { target_value.notNil }) {
-                delta = hardware_value - previous_value;
+            if (target_value.notNil and: { delta.abs > 0 }) {
                 next_value = (target_value + delta).clip(0, 1);
                 ~encoder_target_values[element_name] = next_value;
 

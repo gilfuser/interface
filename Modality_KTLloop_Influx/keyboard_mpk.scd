@@ -1,6 +1,8 @@
 (
 fork{
     MKtl.find(\midi);
+    MKtlDesc.addFolder(thisProcess.nowExecutingPath.dirname, "");
+    MKtlDesc.loadDescs("my-complete-mpkmini2");
     s.sync;
     // TODO:
     1- Diminuir quantidade de processos. Está quebrando o server a.t.m.
